@@ -2,9 +2,11 @@ package net.aabg.m3u8util.util;
 // HttpUtil.java: HTTP请求工具类，用于下载文本内容和字节数据。
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 
 public class HttpUtil {
 
@@ -49,5 +51,17 @@ public class HttpUtil {
         HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
 
         return response.body();
+    }
+    public static String encodeURL(String url) {
+        try {
+            // 假设你的URL被分成两部分：前缀和需要编码的部分
+            String prefix = url.substring(0, 54); // 修改为实际的分隔位置
+            String partToEncode = url.substring(55); // 修改为实际的分隔位置
+            String encodedPart = URLEncoder.encode(partToEncode, StandardCharsets.UTF_8.toString());
+            return prefix + encodedPart;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
