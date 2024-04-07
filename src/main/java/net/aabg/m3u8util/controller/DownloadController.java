@@ -19,7 +19,7 @@ import static net.aabg.m3u8util.util.M3u8Downloader.isM3u8UrlAvailable;
 public class DownloadController {
 
 //    传入参数http://example.com/path/to/your/playlist1.m3u8,http://example.com/path/to/your/playlist2.m3u8";
-    @GetMapping
+    @GetMapping("down")
     public String download(String urls) {
         urls = "http://example.com/path/to/your/playlist1.m3u8," +
                 "http://example.com/path/to/your/playlist2.m3u8";
