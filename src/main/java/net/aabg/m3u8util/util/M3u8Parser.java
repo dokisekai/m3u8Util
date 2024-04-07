@@ -9,25 +9,43 @@ import java.util.regex.Pattern;
 public class M3u8Parser {
 
     // 用于匹配媒体片段URL的简单正则表达式
-    private static final Pattern MEDIA_SEGMENT_PATTERN = Pattern.compile("https?://.*");
+//    private static final Pattern MEDIA_SEGMENT_PATTERN = Pattern.compile("https?://.*");
 
     // 用于匹配EXT-X-KEY标签的正则表达式，提取加密方法和密钥URL
     private static final Pattern ENCRYPTION_PATTERN = Pattern.compile("#EXT-X-KEY:METHOD=([^,]+),URI=\"([^\"]+)\"");
 
+
+    // 用于匹配媒体片段相对路径的正则表达式
+    private static final Pattern MEDIA_SEGMENT_PATTERN = Pattern.compile("([^#\\s]+\\.ts)");
+
+    /**
+     * 解析m3u8内容，提取媒体文件相对路径
+     *
+     * @param m3u8Content m3u8文件的文本内容
+     * @return 包含所有媒体文件相对路径的列表
+     */
+    public static List<String> parseMediaFileRelativePaths(String m3u8Content) {
+        List<String> mediaRelativePaths = new ArrayList<>();
+        Matcher matcher = MEDIA_SEGMENT_PATTERN.matcher(m3u8Content);
+        while (matcher.find()) {
+            mediaRelativePaths.add(matcher.group());
+        }
+        return mediaRelativePaths;
+    }
     /**
      * 解析m3u8内容，提取媒体文件URLs
      *
      * @param m3u8Content m3u8文件的文本内容
      * @return 包含所有媒体文件URL的列表
      */
-    public static List<String> parseMediaFileUrls(String m3u8Content) {
+/*    public static List<String> parseMediaFileUrls(String m3u8Content) {
         List<String> mediaUrls = new ArrayList<>();
         Matcher matcher = MEDIA_SEGMENT_PATTERN.matcher(m3u8Content);
         while (matcher.find()) {
             mediaUrls.add(matcher.group());
         }
         return mediaUrls;
-    }
+    }*/
 
     /**
      * 解析m3u8内容，提取加密信息
