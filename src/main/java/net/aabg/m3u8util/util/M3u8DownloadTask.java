@@ -75,7 +75,7 @@ public class M3u8DownloadTask implements Callable<Void> {
             Files.createDirectories(tempDir);
         }
         for (String mediaUrl : mediaUrls) {
-            downloadTasks.add(new MediaSegmentDownloader(headLink + mediaUrl, tempDir, encryptionInfo, 3)); // 假设最大重试次数为3
+            downloadTasks.add(new MediaSegmentDownloader(headLink + mediaUrl, tempDir, encryptionInfo, 3, Path.of(tempDir + "/log.txt"))); // 假设最大重试次数为3
         }
 
         List<Future<Path>> results = executorService.invokeAll(downloadTasks);
