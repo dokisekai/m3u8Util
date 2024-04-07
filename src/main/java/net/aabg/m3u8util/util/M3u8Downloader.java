@@ -34,7 +34,7 @@ public class M3u8Downloader {
         for (String m3u8Url : m3u8Urls) {
             if (isM3u8UrlAvailable(m3u8Url)){
 //                M3u8DownloadTask downloadTask = new M3u8DownloadTask(m3u8Url, executorService, Paths.get("你的文件路径"));
-                M3u8DownloadTask downloadTask = new M3u8DownloadTask(m3u8Url, executorService, Paths.get("/Users/snz/Documents"));
+                M3u8DownloadTask downloadTask = new M3u8DownloadTask(m3u8Url,"fileName", executorService, Paths.get("/Users/snz/Documents"));
                 futures.add(executorService.submit(downloadTask));
             }else {
                 log.error("所提供的网络路径不可用");

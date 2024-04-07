@@ -1,5 +1,7 @@
 package net.aabg.m3u8util.util;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,13 +13,15 @@ import java.util.concurrent.Future;
 
 public class M3u8DownloadTask implements Callable<Void> {
     private final String m3u8Url;
+    private final String fileName;
     private final ExecutorService executorService; // 用于媒体片段的下载任务
     private final Path downloadDir; // 下载目录
 
-    public M3u8DownloadTask(String m3u8Url, ExecutorService executorService, Path downloadDir) {
+    public M3u8DownloadTask(String m3u8Url, String fileName, ExecutorService executorService, Path downloadDir) {
         this.m3u8Url = m3u8Url;
         this.executorService = executorService;
         this.downloadDir = downloadDir;
+        this.fileName=fileName;
     }
 
     /**
@@ -36,6 +40,19 @@ public class M3u8DownloadTask implements Callable<Void> {
         // 如果未找到斜杠，则返回空字符串
         return "";
     }
+    public static String extractPathFromUrl(String url) throws URISyntaxException {
+        URI uri = new URI(url);
+        String path = uri.getPath();
+        int lastSlashIndex = path.lastIndexOf('/');
+        if (lastSlashIndex != -1) {
+            path = path.substring(lastSlashIndex + 1); // 丢弃最后一个斜杠前面的内容
+        }
+        int dotIndex = path.indexOf('.');
+        if (dotIndex != -1) {
+            path = path.substring(0, dotIndex); // 丢弃"."后面的内容
+        }
+        return path;
+    }
     @Override
     public Void call() throws Exception {
         String m3u8Content = HttpUtil.downloadContent(m3u8Url);
@@ -44,8 +61,19 @@ public class M3u8DownloadTask implements Callable<Void> {
         EncryptionInfo encryptionInfo = M3u8Parser.parseEncryptionInfo(m3u8Content);
 
         List<Callable<Path>> downloadTasks = new ArrayList<>();
-        Path tempDir = downloadDir.resolve("temp"); // 为每个片段创建临时目录
-        Files.createDirectories(tempDir);
+
+        String tempDirName = extractPathFromUrl(m3u8Url); // 使用URL的路径部分作为临时目录的名称
+        String userHomeDir = System.getProperty("user.home");
+        Path tempDir=null;
+        if (fileName!=null){
+            tempDir = Paths.get(userHomeDir, fileName);
+        }else {
+            tempDir = Paths.get(userHomeDir, tempDirName);
+        }
+
+        if (!Files.exists(tempDir)) {
+            Files.createDirectories(tempDir);
+        }
         for (String mediaUrl : mediaUrls) {
             downloadTasks.add(new MediaSegmentDownloader(headLink + mediaUrl, tempDir, encryptionInfo, 3)); // 假设最大重试次数为3
         }
@@ -56,7 +84,7 @@ public class M3u8DownloadTask implements Callable<Void> {
             downloadedSegments.add(result.get()); // 获取下载结果，此处简化错误处理
         }
 
-        Path finalOutputPath = downloadDir.resolve("finalOutput.ts");
+        Path finalOutputPath = downloadDir.resolve(tempDir+"/"+fileName+".ts");
         FileMerger.mergeFiles(downloadedSegments, finalOutputPath);
         System.out.println("下载和合并完成: " + finalOutputPath);
 

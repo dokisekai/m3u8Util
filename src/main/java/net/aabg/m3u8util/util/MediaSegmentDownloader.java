@@ -24,22 +24,22 @@ public class MediaSegmentDownloader implements Callable<Path> {
         Path outputPath = downloadDir.resolve(URI.create(mediaUrl).getPath().replaceAll(".*/", ""));
         for (int attempt = 1; attempt <= retryAttempts; attempt++) {
             try {
+                System.out.println("开始下载，尝试次数: " + attempt + "，URL: " + mediaUrl); // 添加打印语句
                 byte[] mediaData = HttpUtil.downloadBytes(mediaUrl);
 
                 if (encryptionInfo != null && encryptionInfo.isEncrypted) {
-                    // 假设EncryptUtil类已实现
                     byte[] key = HttpUtil.downloadBytes(encryptionInfo.keyUri);
-                    // 这里简化处理，假设IV以某种方式提供或不需要
                     byte[] decryptedData = EncryptUtil.decryptAES(mediaData, key, new byte[16]);
                     Files.write(outputPath, decryptedData);
                 } else {
                     Files.write(outputPath, mediaData);
                 }
 
-                return outputPath; // 成功下载并处理（如果需要解密，则解密），返回保存的文件路径
+                System.out.println("成功下载，尝试次数: " + attempt + "，URL: " + mediaUrl); // 添加打印语句
+                return outputPath;
             } catch (IOException e) {
                 System.out.println("下载失败，尝试次数: " + attempt + "，URL: " + mediaUrl);
-                if (attempt == retryAttempts) throw e; // 在最后一次重试仍然失败时抛出异常
+                if (attempt == retryAttempts) throw e;
             }
         }
 
