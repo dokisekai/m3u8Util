@@ -17,6 +17,9 @@ import static net.aabg.m3u8util.util.M3u8Downloader.isM3u8UrlAvailable;
 @Slf4j
 @RestController
 public class DownloadController {
+    //创建一个任务池，记录下载任务状态
+    //为一次调用生成一个批次，批次状态为全部成功，部分成功，全部失败
+    //记录每一个下载链接的下载状态，成功，失败，重试次数
 
 //    传入参数http://example.com/path/to/your/playlist1.m3u8,http://example.com/path/to/your/playlist2.m3u8";
     @GetMapping("down")
@@ -55,13 +58,13 @@ public class DownloadController {
             try {
                 future.get(); // 这里会阻塞，直到任务完成或者抛出异常
             } catch (Exception e) {
-                System.err.println("下载任务执行出错: " + e.getMessage());
+                log.error("下载任务执行出错: " + e.getMessage());
             }
         });
 
         // 所有任务完成后，关闭线程池
         executorService.shutdown();
-        System.out.println("所有下载任务完成。");
+        log.info("所有下载任务完成。");
         return null;
     }
 }
