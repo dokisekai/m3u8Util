@@ -1,5 +1,7 @@
 package net.aabg.m3u8util.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -11,6 +13,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+@Slf4j
 public class M3u8DownloadTask implements Callable<Void> {
     private final String m3u8Url;
     private final String fileName;
@@ -74,6 +77,11 @@ public class M3u8DownloadTask implements Callable<Void> {
         if (!Files.exists(tempDir)) {
             Files.createDirectories(tempDir);
         }
+
+        int totalSegments = mediaUrls.size(); // 总片段数量
+        int successCount = 0; // 成功数量
+        int failCount = 0; // 失败数量
+        //下载媒体片段
         for (String mediaUrl : mediaUrls) {
             downloadTasks.add(new MediaSegmentDownloader(headLink + mediaUrl, tempDir, encryptionInfo, 3, Path.of(tempDir + "/log.txt"))); // 假设最大重试次数为3
         }
@@ -81,12 +89,28 @@ public class M3u8DownloadTask implements Callable<Void> {
         List<Future<Path>> results = executorService.invokeAll(downloadTasks);
         List<Path> downloadedSegments = new ArrayList<>();
         for (Future<Path> result : results) {
-            downloadedSegments.add(result.get()); // 获取下载结果，此处简化错误处理
+            try {
+                downloadedSegments.add(result.get());// 获取下载结果，此处简化错误处理
+                successCount++; // 如果成功，增加成功数量
+            } catch (Exception e) {
+                failCount++; // 如果失败，增加失败数量
+            }
+        }
+        // 打印统计信息
+        log.info("总片段数量: " + totalSegments);
+        log.info("成功数量: " + successCount);
+        log.info("失败数量: " + failCount);
+        if (totalSegments==successCount){
+            log.info("所有片段下载成功");
+            Path finalOutputPath = downloadDir.resolve(tempDir+"/"+fileName+".ts");
+            FileMerger.mergeFiles(downloadedSegments, finalOutputPath);
+            log.info("下载和合并完成: " + finalOutputPath);
+        } else {
+            log.info("部分片段下载失败");
         }
 
-        Path finalOutputPath = downloadDir.resolve(tempDir+"/"+fileName+".ts");
-        FileMerger.mergeFiles(downloadedSegments, finalOutputPath);
-        System.out.println("下载和合并完成: " + finalOutputPath);
+
+
 
         return null;
     }

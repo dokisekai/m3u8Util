@@ -48,13 +48,13 @@ public class M3u8Downloader {
             try {
                 future.get(); // 这里会阻塞，直到任务完成或者抛出异常
             } catch (Exception e) {
-                System.err.println("下载任务执行出错: " + e.getMessage());
+                log.error("下载任务执行出错: " + e.getMessage());
             }
         });
 
         // 所有任务完成后，关闭线程池
         executorService.shutdown();
-        System.out.println("所有下载任务完成。");
+        log.info("所有下载任务完成。");
     }
 
 
@@ -72,7 +72,7 @@ public class M3u8Downloader {
             // 通常，状态码200表示资源可用，但也可能需要检查其他状态码如 302（重定向）
             return statusCode == 200;
         } catch (IOException | InterruptedException e) {
-            System.err.println("Error checking M3U8 URL: " + e.getMessage());
+            log.error("Error checking M3U8 URL: " + e.getMessage());
             Thread.currentThread().interrupt(); // 处理InterruptedException时重设中断状态
         }
 

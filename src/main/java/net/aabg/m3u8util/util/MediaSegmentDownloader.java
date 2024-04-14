@@ -1,5 +1,7 @@
 package net.aabg.m3u8util.util;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,6 +13,7 @@ import java.util.concurrent.Callable;
 
 import static net.aabg.m3u8util.util.M3u8DownloadTask.extractPathFromUrl;
 
+@Slf4j
 public class MediaSegmentDownloader implements Callable<Path> {
     private final String mediaUrl;
     private final Path downloadDir;
@@ -29,14 +32,13 @@ public class MediaSegmentDownloader implements Callable<Path> {
     @Override
     public Path call() throws Exception {
         Path outputPath = downloadDir.resolve(URI.create(mediaUrl).getPath().replaceAll(".*/", ""));
-        if (isDownloaded(mediaUrl)) { // 检查是否已经下载过
-            System.out.println("已下载，跳过: " + mediaUrl);
-            return outputPath;
+        if (isDownloaded(mediaUrl)) { // 检查片段是否已经下载过
+            log.info("已下载，跳过: " + mediaUrl);            return outputPath;
         }
 
         for (int attempt = 1; attempt <= retryAttempts; attempt++) {
             try {
-                System.out.println("开始下载，尝试次数: " + attempt + "，URL: " + mediaUrl);
+                log.info("开始下载，尝试次数: " + attempt + "，URL: " + mediaUrl);
                 byte[] mediaData = HttpUtil.downloadBytes(mediaUrl);
 
                 if (encryptionInfo != null && encryptionInfo.isEncrypted) {
@@ -48,10 +50,10 @@ public class MediaSegmentDownloader implements Callable<Path> {
                 }
 
                 recordDownload(mediaUrl, outputPath.getFileName().toString()); // 记录下载信息
-                System.out.println("成功下载，尝试次数: " + attempt + "，URL: " + mediaUrl);
+                log.info("成功下载，尝试次数: " + attempt + "，URL: " + mediaUrl);
                 return outputPath;
             } catch (IOException e) {
-                System.out.println("下载失败，尝试次数: " + attempt + "，URL: " + mediaUrl);
+                log.info("下载失败，尝试次数: " + attempt + "，URL: " + mediaUrl);
                 Files.deleteIfExists(outputPath);
                 if (attempt == retryAttempts) throw e;
             }
@@ -65,12 +67,12 @@ public class MediaSegmentDownloader implements Callable<Path> {
         if (!Files.exists(recordFile)) {
             try {
                 Files.createFile(recordFile);
-                System.out.println("文件已创建: " + recordFile);
+                log.info("文件已创建: " + recordFile);
             } catch (IOException e) {
-                System.err.println("创建文件失败: " + e.getMessage());
+                log.error("创建文件失败: " + e.getMessage());
             }
         } else {
-            System.out.println("文件已存在: " + recordFile);
+            log.info("文件已存在: " + recordFile);
         }
 
         List<String> lines = Files.readAllLines(recordFile);
